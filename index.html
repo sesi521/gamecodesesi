@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katak Detektif AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --water-light: #48cae4;
+            --water-dark: #0077b6;
+            --pad-light: #52b788;
+            --pad-dark: #2d6a4f;
+            --frog-green: #74c69d;
+            --frog-dark: #40916c;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0f9ff;
+            touch-action: manipulation; /* Mencegah zoom saat double tap cepat */
+            overflow: hidden; /* Mencegah scrolling */
+        }
+
+        h1, h2, h3, .font-title {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* Lingkungan Air */
+        .water-bg {
+            background: linear-gradient(to bottom, var(--water-light), var(--water-dark));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" fill="%23ffffff" opacity=".25"></path><path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" fill="%23ffffff" opacity=".5"></path></svg>') repeat-x;
+            background-size: 50% 100%;
+            animation: wave-move 10s linear infinite;
+        }
+        .wave2 {
+            animation: wave-move 15s linear infinite reverse;
+            opacity: 0.3;
+            bottom: -20px;
+        }
+
+        @keyframes wave-move {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Daun Teratai */
+        .lily-pad {
+            background-color: var(--pad-light);
+            border-bottom: 6px solid var(--pad-dark);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .lily-pad::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -5%;
+            width: 30%;
+            height: 30%;
+            background-color: var(--water-light); /* Celah daun */
+            border-radius: 50%;
+            transform: translateY(-50%);
+        }
+
+        .lily-pad:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+        
+        .lily-pad.disabled {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Katak Karakter (CSS) */
+        .frog {
+            width: 80px;
+            height: 70px;
+            position: absolute;
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 30;
+            transform-origin: bottom center;
+        }
+
+        .frog-body {
+            width: 100%;
+            height: 100%;
+            background-color: var(--frog-green);
+            border-radius: 40% 40% 20% 20%;
+            position: absolute;
+            bottom: 0;
+            border: 3px solid var(--frog-dark);
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.1);
+        }
+
+        .frog-eye {
+            width: 24px;
+            height: 24px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: -10px;
+            border: 3px solid var(--frog-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .frog-eye.left { left: 10px; }
+        .frog-eye.right { right: 10px; }
+        
+        .pupil {
+            width: 10px;
+            height: 10px;
+            background-color: black;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .frog-mouth {
+            width: 30px;
+            height: 10px;
+            border-bottom: 3px solid var(--frog-dark);
+            border-radius: 0 0 20px 20px;
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            transition: all 0.2s;
+        }
+
+        .frog-leg {
+            width: 25px;
+            height: 35px;
+            background-color: var(--frog-green);
+            border: 3px solid var(--frog-dark);
+            border-radius: 20px;
+            position: absolute;
+            bottom: -5px;
+            z-index: -1;
+        }
+        .frog-leg.left { left: -10px; transform: rotate(-30deg); }
+        .frog-leg.right { right: -10px; transform: rotate(30deg); }
+
+        /* Status Animasi Katak */
+        .frog.jumping .frog-body { height: 110%; transform: scaleY(1.1); }
+        .frog.jumping .frog-leg { transform: rotate(0deg) translateY(10px); }
+        
+        .frog.surprised .pupil { transform: scale(0.5); }
+        .frog.surprised .frog-mouth { height: 15px; border-radius: 50%; border: 3px solid var(--frog-dark); top: 20px; background: #ff9999; }
+        
+        .frog.falling {
+            animation: fallToWater 0.8s forwards;
+        }
+
+        @keyframes fallToWater {
+            0% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+            40% { transform: translateY(-50px) scale(1.1) rotate(15deg); }
+            100% { transform: translateY(150px) scale(0.5) rotate(-45deg); opacity: 0; }
+        }
+
+        /* Efek Partikel & Umpan Balik */
+        .splash {
+            position: absolute;
+            width: 100px;
+            height: 30px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 50%;
+            transform: scale(0);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 25;
+        }
+        .splash.active {
+            animation: splashing 0.6s ease-out forwards;
+        }
+        @keyframes splashing {
+            0% { transform: scale(0.5); opacity: 0.8; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        .star-burst {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+            z-index: 40;
+            opacity: 0;
+        }
+        .star-burst.active {
+            animation: starPop 0.8s ease-out forwards;
+        }
+        @keyframes starPop {
+            0% { transform: translateY(0) scale(0.5) rotate(0); opacity: 1; }
+            100% { transform: translateY(-100px) scale(1.5) rotate(360deg); opacity: 0; }
+        }
+
+        /* UI Elements */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 4px solid white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to bottom, #fde047, #eab308);
+            border-bottom: 5px solid #ca8a04;
+            transition: all 0.1s;
+        }
+        .btn-primary:active {
+            transform: translateY(5px);
+            border-bottom-width: 0px;
+            margin-bottom: 5px;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to bottom, #93c5fd, #3b82f6);
+            border-bottom: 5px solid #2563eb;
+            color: white;
+            transition: all 0.1s;
+        }
+        .btn-secondary:active {
+            transform: translateY(5px);
+            border-bottom-width: 0px;
+            margin-bottom: 5px;
+        }
+
+        /* Status Jawaban Daun */
+        .pad-correct {
+            background-color: #4ade80 !important; /* Hijau terang */
+            border-color: #166534 !important;
+            animation: bounce 0.5s ease;
+        }
+        .pad-wrong {
+            background-color: #f87171 !important; /* Merah */
+            border-color: #991b1b !important;
+            opacity: 0.5;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Utilities */
+        .hidden-screen { display: none !important; }
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Modals */
+        #feedback-modal {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-hidden { transform: scale(0); opacity: 0; pointer-events: none; }
+        .modal-visible { transform: scale(1); opacity: 1; pointer-events: auto; }
+        
+        /* Layout Daun Dinamis */
+        .pads-container-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 600px; }
+        .pads-container-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 600px; gap: 1rem; }
+        @media (min-width: 768px) {
+            .pads-container-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 900px; }
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased h-screen w-screen flex justify-center items-center">
+
+    <div id="app" class="relative w-full h-full max-w-4xl mx-auto overflow-hidden bg-white shadow-2xl rounded-none md:rounded-3xl border-0 md:border-8 border-blue-300">
+        
+        <!-- AUDIO (Placeholder untuk efek suara yang dimainkan via Web Audio API/Audio element jika diizinkan, di sini kita gunakan visual cue sebagai pengganti utama untuk menghindari masalah autoplay iframe) -->
+
+        <!-- ==================== MAIN MENU ==================== -->
+        <div id="screen-menu" class="absolute inset-0 z-50 flex flex-col items-center justify-center water-bg p-6">
+            <div class="wave wave1"></div>
+            <div class="wave wave2"></div>
+            
+            <div class="text-center z-10 glass-panel p-8 rounded-3xl w-full max-w-md animate-[float_4s_ease-in-out_infinite]">
+                <div class="text-6xl mb-2">🐸</div>
+                <h1 class="text-4xl md:text-5xl font-bold text-blue-900 mb-2 font-title leading-tight">KATAK DETEKTIF <span class="text-yellow-500">AI</span></h1>
+                <p class="text-lg text-blue-700 font-semibold mb-8">"Lompat ke AI atau Bukan AI?"</p>
+                
+                <div class="space-y-4 flex flex-col w-full px-4">
+                    <button onclick="startGame()" class="btn-primary py-4 px-6 rounded-2xl text-xl font-bold text-yellow-900 font-title flex items-center justify-center gap-2">
+                        <i class="fas fa-play"></i> MULAI BERMAIN
+                    </button>
+                    <button onclick="showScreen('screen-materi')" class="btn-secondary py-3 px-6 rounded-2xl text-lg font-bold font-title flex items-center justify-center gap-2">
+                        <i class="fas fa-book-open"></i> MATERI AI
+                    </button>
+                    <button onclick="showScreen('screen-howto')" class="bg-white border-b-4 border-gray-300 text-gray-700 py-3 px-6 rounded-2xl text-lg font-bold font-title flex items-center justify-center gap-2 transition hover:bg-gray-50 active:translate-y-1 active:border-b-0 active:mb-1">
+                        <i class="fas fa-question-circle"></i> CARA BERMAIN
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MATERI AI SCREEN ==================== -->
+        <div id="screen-materi" class="hidden-screen absolute inset-0 z-50 bg-blue-50 overflow-y-auto p-6 flex flex-col fade-in">
+            <button onclick="showScreen('screen-menu')" class="absolute top-4 left-4 bg-white p-3 rounded-full shadow-md text-blue-600 hover:bg-blue-100 transition z-10">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </button>
+            
+            <div class="max-w-2xl mx-auto w-full mt-12 bg-white p-8 rounded-3xl shadow-lg border-4 border-blue-200">
+                <h2 class="text-3xl font-bold text-center text-blue-800 mb-6 font-title">📚 Mengenal Kecerdasan Artifisial (AI)</h2>
+                
+                <div class="space-y-6 text-lg">
+                    <div class="bg-blue-50 p-5 rounded-2xl border border-blue-100">
+                        <h3 class="font-bold text-blue-900 text-xl mb-2 flex items-center gap-2">
+                            <i class="fas fa-robot text-blue-500"></i> Apa itu AI?
+                        </h3>
+                        <p>AI (Kecerdasan Artifisial) adalah teknologi yang membuat komputer atau mesin dapat melakukan tugas yang biasanya membutuhkan kecerdasan manusia, seperti belajar, mengenali pola, dan membuat keputusan.</p>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-green-700 text-xl mb-3 flex items-center gap-2 border-b-2 border-green-200 pb-2">
+                            <i class="fas fa-check-circle text-green-500"></i> Contoh AI di Sekitar Kita
+                        </h3>
+                        <ul class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <li class="bg-green-50 p-3 rounded-xl flex items-center gap-3"><i class="fas fa-mobile-alt text-green-600"></i> Face Unlock HP</li>
+                            <li class="bg-green-50 p-3 rounded-xl flex items-center gap-3"><i class="fas fa-comments text-green-600"></i> Chatbot Pintar</li>
+                            <li class="bg-green-50 p-3 rounded-xl flex items-center gap-3"><i class="fab fa-youtube text-red-500"></i> Rekomendasi Video</li>
+                            <li class="bg-green-50 p-3 rounded-xl flex items-center gap-3"><i class="fas fa-music text-green-600"></i> Rekomendasi Musik</li>
+                            <li class="bg-green-50 p-3 rounded-xl flex items-center gap-3"><i class="fas fa-map-marked-alt text-blue-500"></i> Navigasi (Google Maps)</li>
+                            <li class="bg-green-50 p-3 rounded-xl flex items-center gap-3"><i class="fas fa-language text-green-600"></i> Penerjemah Otomatis</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-red-700 text-xl mb-3 flex items-center gap-2 border-b-2 border-red-200 pb-2">
+                            <i class="fas fa-times-circle text-red-500"></i> Ini BUKAN AI
+                        </h3>
+                        <p class="text-gray-600 text-sm mb-3 italic">Hanya alat elektronik atau program sederhana yang menjalankan perintah pasti tanpa kemampuan belajar/menganalisis data.</p>
+                        <ul class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <li class="bg-red-50 p-3 rounded-xl flex items-center gap-3"><i class="fas fa-calculator text-red-400"></i> Kalkulator Biasa</li>
+                            <li class="bg-red-50 p-3 rounded-xl flex items-center gap-3"><i class="fas fa-ruler text-red-400"></i> Penggaris</li>
+                            <li class="bg-red-50 p-3 rounded-xl flex items-center gap-3"><i class="far fa-lightbulb text-red-400"></i> Lampu Saklar</li>
+                            <li class="bg-red-50 p-3 rounded-xl flex items-center gap-3"><i class="fas fa-stopwatch text-red-400"></i> Stopwatch Manual</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center">
+                    <button onclick="showScreen('screen-menu')" class="btn-primary py-3 px-8 rounded-2xl text-lg font-bold font-title">
+                        Sip, Saya Paham! 👍
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== HOW TO PLAY SCREEN ==================== -->
+        <div id="screen-howto" class="hidden-screen absolute inset-0 z-50 bg-blue-50 overflow-y-auto p-6 flex flex-col fade-in">
+            <button onclick="showScreen('screen-menu')" class="absolute top-4 left-4 bg-white p-3 rounded-full shadow-md text-blue-600 hover:bg-blue-100 transition z-10">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </button>
+            
+            <div class="max-w-2xl mx-auto w-full mt-12 bg-white p-8 rounded-3xl shadow-lg border-4 border-blue-200">
+                <h2 class="text-3xl font-bold text-center text-blue-800 mb-6 font-title">❓ Cara Bermain</h2>
+                
+                <div class="space-y-6">
+                    <div class="flex gap-4 items-start bg-blue-50 p-4 rounded-2xl">
+                        <div class="text-4xl">🐸</div>
+                        <div>
+                            <h4 class="font-bold text-lg">Bantu Katak Menyeberang</h4>
+                            <p class="text-gray-700">Katak harus melompat dari daun ke daun. Bacalah pertanyaan atau situasi yang muncul di layar.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4 items-start bg-green-50 p-4 rounded-2xl">
+                        <div class="text-4xl">👆</div>
+                        <div>
+                            <h4 class="font-bold text-lg">Pilih Jawaban</h4>
+                            <p class="text-gray-700">Klik/Sentuh daun teratai yang berisi jawaban benar. Apakah contoh tersebut menggunakan AI atau bukan? Atau pilih jawaban pilihan ganda yang tepat.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 items-start bg-yellow-50 p-4 rounded-2xl">
+                        <div class="text-4xl">⭐</div>
+                        <div>
+                            <h4 class="font-bold text-lg">Kumpulkan Poin</h4>
+                            <p class="text-gray-700">Jawaban benar = +10 Poin. Jawab benar 3x berturut-turut dapat bonus +10, 5x dapat bonus +20!</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 items-start bg-red-50 p-4 rounded-2xl">
+                        <div class="text-4xl">💦</div>
+                        <div>
+                            <h4 class="font-bold text-lg">Hati-hati Jatuh!</h4>
+                            <p class="text-gray-700">Kamu punya 3 nyawa (❤️❤️❤️). Jika salah jawab, katak akan jatuh ke air dan nyawa berkurang. Jika habis, permainan berakhir.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center">
+                    <button onclick="startGame()" class="btn-primary py-3 px-8 rounded-2xl text-lg font-bold font-title">
+                        Mulai Main Sekarang! 🎮
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== GAME SCREEN ==================== -->
+        <div id="screen-game" class="hidden-screen absolute inset-0 z-40 water-bg flex flex-col justify-between">
+            <div class="wave wave1"></div>
+            <div class="wave wave2"></div>
+            
+            <!-- HUD (Head-Up Display) -->
+            <div class="w-full p-4 flex justify-between items-center z-20 glass-panel rounded-b-3xl absolute top-0 left-0 right-0">
+                <div class="flex flex-col">
+                    <span class="text-sm font-bold text-gray-500 uppercase tracking-wider">Skor</span>
+                    <span id="score-display" class="text-3xl font-bold font-title text-blue-900 leading-none">0</span>
+                    <span id="streak-indicator" class="text-xs font-bold text-orange-500 h-4 transition-opacity duration-300 opacity-0">🔥 Streak!</span>
+                </div>
+                
+                <div class="flex flex-col items-center">
+                    <span class="text-sm font-bold text-gray-500 uppercase tracking-wider">Progres</span>
+                    <span id="progress-display" class="font-bold text-lg bg-blue-100 text-blue-800 px-3 py-1 rounded-full border border-blue-200">1 / 20</span>
+                </div>
+
+                <div class="flex flex-col items-end">
+                    <span class="text-sm font-bold text-gray-500 uppercase tracking-wider">Nyawa</span>
+                    <div id="lives-display" class="flex gap-1 text-2xl text-red-500 drop-shadow-md">
+                        <i class="fas fa-heart"></i>
+                        <i class="fas fa-heart"></i>
+                        <i class="fas fa-heart"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Area Pertanyaan -->
+            <div class="z-20 w-full px-4 flex justify-center mt-28">
+                <div class="glass-panel p-5 md:p-6 rounded-3xl max-w-2xl w-full text-center transform transition-transform duration-300" id="question-container">
+                    <h3 id="question-level" class="text-sm font-bold text-blue-500 uppercase mb-1 tracking-widest">Level 1 - Kenali AI</h3>
+                    <p id="question-text" class="text-lg md:text-2xl font-bold text-gray-800 leading-snug">
+                        Memuat pertanyaan...
+                    </p>
+                </div>
+            </div>
+
+            <!-- Area Bermain (Daun & Katak) -->
+            <div class="relative flex-grow w-full z-10 flex flex-col justify-end items-center pb-8 md:pb-16" id="play-area">
+                
+                <!-- Daun Pilihan Jawaban -->
+                <div id="pads-container" class="grid gap-4 w-full px-4 mb-24 z-10 relative place-items-center w-full max-w-4xl mx-auto">
+                    <!-- Daun di-generate via JS -->
+                </div>
+
+                <!-- Efek Percikan Air -->
+                <div id="splash-effect" class="splash bottom-12"></div>
+                
+                <!-- Katak & Daun Awal -->
+                <div class="relative w-full flex justify-center h-24">
+                    <div class="lily-pad w-32 h-16 absolute bottom-0 opacity-70" style="background-color: #388e3c; border-bottom-color: #1b5e20;"></div>
+                    
+                    <div id="player-frog" class="frog bottom-4">
+                        <div class="frog-leg left"></div>
+                        <div class="frog-leg right"></div>
+                        <div class="frog-body"></div>
+                        <div class="frog-eye left"><div class="pupil"></div></div>
+                        <div class="frog-eye right"><div class="pupil"></div></div>
+                        <div class="frog-mouth"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Umpan Balik (Benar/Salah) -->
+            <div id="feedback-modal" class="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm modal-hidden">
+                <div class="bg-white p-8 rounded-3xl max-w-md w-11/12 text-center shadow-2xl border-t-8 border-t-red-500" id="feedback-card">
+                    <div id="feedback-icon" class="text-6xl mb-4 -mt-16 bg-white w-24 h-24 mx-auto rounded-full flex items-center justify-center shadow-lg border-4 border-red-500 text-red-500">
+                        💦
+                    </div>
+                    <h2 id="feedback-title" class="text-3xl font-bold font-title mb-2 text-red-600">Ups! Belum tepat.</h2>
+                    
+                    <div class="bg-gray-50 p-4 rounded-2xl mb-6 text-left border border-gray-200">
+                        <p class="text-sm text-gray-500 mb-1">Jawaban yang benar:</p>
+                        <p id="feedback-correct-answer" class="font-bold text-lg text-gray-800 mb-2 border-b pb-2">Bukan AI</p>
+                        <p id="feedback-explanation" class="text-gray-700 text-sm md:text-base leading-relaxed">Penjelasan muncul di sini.</p>
+                    </div>
+
+                    <button id="feedback-btn" class="btn-primary w-full py-4 rounded-2xl text-xl font-bold font-title text-yellow-900 shadow-md">
+                        Coba Lagi 🔄
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Toast Umpan Balik Benar (Otomatis Hilang) -->
+            <div id="correct-toast" class="absolute top-28 left-1/2 transform -translate-x-1/2 bg-green-50 border-4 border-green-400 p-4 rounded-2xl shadow-xl z-50 text-center max-w-lg w-11/12 opacity-0 pointer-events-none transition-opacity duration-300">
+                <h4 class="text-green-600 font-bold text-2xl font-title mb-1">⭐ BENAR!</h4>
+                <p id="correct-toast-text" class="text-gray-700 text-sm md:text-base font-semibold leading-snug"></p>
+            </div>
+
+            <!-- Floating Stars Container -->
+            <div id="stars-container" class="absolute inset-0 pointer-events-none z-50 overflow-hidden"></div>
+        </div>
+
+        <!-- ==================== GAME OVER / VICTORY SCREEN ==================== -->
+        <div id="screen-result" class="hidden-screen absolute inset-0 z-50 bg-gradient-to-b from-blue-400 to-blue-600 flex flex-col items-center justify-center p-6 fade-in text-white">
+            
+            <!-- Confetti Canvas (Simple CSS alternative below) -->
+            <div class="absolute inset-0 pointer-events-none overflow-hidden" id="confetti-layer"></div>
+
+            <div class="bg-white text-gray-800 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl relative z-10">
+                <div id="result-icon" class="text-7xl mb-2 -mt-16 bg-white w-28 h-28 mx-auto rounded-full flex items-center justify-center shadow-xl border-8 border-yellow-400">
+                    🏆
+                </div>
+                
+                <h1 id="result-title" class="text-3xl md:text-4xl font-bold font-title text-blue-900 mb-2">MISI SELESAI!</h1>
+                <p id="result-subtitle" class="text-gray-600 font-semibold mb-6">Kamu Berhasil Menyeberangkan Katak!</p>
+                
+                <div class="bg-blue-50 rounded-2xl p-4 mb-6 border-2 border-blue-100">
+                    <p class="text-sm font-bold text-blue-400 uppercase tracking-widest mb-1">Skor Akhir</p>
+                    <p id="result-score" class="text-5xl font-bold font-title text-blue-700 mb-4">0</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-sm font-bold">
+                        <div class="bg-green-100 text-green-700 p-2 rounded-xl">
+                            Benar: <span id="result-correct">0</span>
+                        </div>
+                        <div class="bg-red-100 text-red-700 p-2 rounded-xl">
+                            Salah: <span id="result-wrong">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <p class="text-sm text-gray-500 mb-1">Tingkat Akurasi: <span id="result-accuracy" class="font-bold text-blue-600">0%</span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+                        <div id="accuracy-bar" class="bg-blue-500 h-3 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                    <div class="inline-block px-4 py-2 bg-yellow-100 text-yellow-800 font-bold rounded-full text-lg shadow-sm border border-yellow-300" id="result-rank">
+                        🥇 Master AI
+                    </div>
+                </div>
+
+                <p class="text-sm text-gray-600 italic mb-8 px-2">"AI ada di sekitar kita. Kenali, pahami, dan gunakan dengan bijak!"</p>
+
+                <div class="space-y-3">
+                    <button onclick="startGame()" class="btn-primary w-full py-3 rounded-2xl text-lg font-bold font-title text-yellow-900">
+                        <i class="fas fa-redo"></i> MAIN LAGI
+                    </button>
+                    <button onclick="showScreen('screen-menu')" class="w-full py-3 rounded-2xl text-lg font-bold font-title text-blue-600 bg-white border-2 border-blue-200 hover:bg-blue-50 active:scale-95 transition">
+                        <i class="fas fa-home"></i> KEMBALI KE MENU
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DATA SOAL (BANK SOAL) ---
+        // Mencakup Tipe Identifikasi, Situasi, dan Analisis sesuai instruksi (Total > 30)
+        const questionBank = [
+            // CONTOH AI (Identifikasi & Binary)
+            { level: 1, type: "binary", text: "Face Unlock mengenali wajah pemilik smartphone.", options: ["AI", "Bukan AI"], correct: 0, explanation: "Face Unlock menggunakan teknologi AI untuk mengenali pola dan fitur unik wajah seseorang." },
+            { level: 1, type: "binary", text: "YouTube memberikan rekomendasi video.", options: ["AI", "Bukan AI"], correct: 0, explanation: "Sistem mempelajari riwayat tontonanmu untuk memprediksi video apa yang mungkin kamu sukai." },
+            { level: 1, type: "binary", text: "Aplikasi musik memberikan rekomendasi lagu.", options: ["AI", "Bukan AI"], correct: 0, explanation: "AI menganalisis lagu yang sering kamu putar untuk menemukan lagu baru dengan pola serupa." },
+            { level: 1, type: "binary", text: "Google Maps memberikan rekomendasi rute tercepat.", options: ["AI", "Bukan AI"], correct: 0, explanation: "Maps menggunakan AI untuk memproses data lalu lintas secara real-time dan mencari rute terbaik." },
+            { level: 1, type: "binary", text: "Chatbot menjawab pertanyaan pengguna dengan luwes.", options: ["AI", "Bukan AI"], correct: 0, explanation: "Chatbot menggunakan Pemrosesan Bahasa Alami (NLP) agar bisa memahami dan membalas teks." },
+            { level: 1, type: "binary", text: "Voice Assistant memahami perintah suara penggunanya.", options: ["AI", "Bukan AI"], correct: 0, explanation: "Ini menggunakan AI untuk mengubah suara manusia menjadi teks yang bisa dipahami komputer." },
+            { level: 1, type: "binary", text: "Aplikasi menerjemahkan bahasa secara otomatis.", options: ["AI", "Bukan AI"], correct: 0, explanation: "AI penerjemah mempelajari miliaran teks dari berbagai bahasa untuk menerjemahkan konteks kalimat." },
+            { level: 1, type: "binary", text: "Kamera pintar mengenali dan memfokuskan pada wajah.", options: ["AI", "Bukan AI"], correct: 0, explanation: "Kamera menggunakan Computer Vision (AI) untuk mendeteksi mana bagian gambar yang berupa wajah." },
+            { level: 1, type: "binary", text: "Aplikasi memberikan rekomendasi berdasarkan kebiasaan pengguna.", options: ["AI", "Bukan AI"], correct: 0, explanation: "AI mampu mengenali pola dari rutinitas dan kebiasaan yang terekam dalam data pengguna." },
+            { level: 1, type: "binary", text: "AI membuat gambar berdasarkan perintah teks.", options: ["AI", "Bukan AI"], correct: 0, explanation: "AI Generatif telah belajar dari jutaan gambar di internet untuk bisa menciptakan gambar baru." },
+            { level: 1, type: "binary", text: "AI membantu mengoreksi atau membuat tulisan.", options: ["AI", "Bukan AI"], correct: 0, explanation: "Ini menggunakan model bahasa besar (LLM) yang mampu memahami tata bahasa dan konteks tulisan." },
+            { level: 1, type: "binary", text: "Sistem mendeteksi objek tertentu dalam sebuah gambar.", options: ["AI", "Bukan AI"], correct: 0, explanation: "Ini merupakan kemampuan AI dalam pengenalan citra (image recognition)." },
+            { level: 1, type: "binary", text: "Sistem rekomendasi belanja menyarankan produk berdasarkan aktivitas.", options: ["AI", "Bukan AI"], correct: 0, explanation: "AI menganalisis barang apa yang sering kamu lihat dan beli untuk menebak apa yang kamu butuhkan selanjutnya." },
+
+            // CONTOH BUKAN AI (Identifikasi & Binary)
+            { level: 1, type: "binary", text: "Kalkulator biasa menghitung 25 + 15.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Kalkulator biasa hanya menjalankan operasi matematika pasti tanpa kemampuan belajar." },
+            { level: 1, type: "binary", text: "Penggaris digunakan untuk mengukur panjang.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Penggaris adalah alat ukur manual, tidak memiliki komponen komputasi." },
+            { level: 1, type: "binary", text: "Buku tulis digunakan untuk mencatat pelajaran.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Buku tulis adalah benda fisik biasa, tidak memiliki teknologi sama sekali." },
+            { level: 1, type: "binary", text: "Lampu dinyalakan menggunakan saklar manual.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Saklar hanya memutus atau menyambung arus listrik secara mekanis, bukan cerdas." },
+            { level: 1, type: "binary", text: "Jam dinding biasa menunjukkan waktu.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Jam analog bekerja menggunakan mekanisme gerigi fisik yang tetap." },
+            { level: 1, type: "binary", text: "Pensil digunakan untuk menulis.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Pensil adalah alat tulis dasar yang dioperasikan sepenuhnya oleh manusia." },
+            { level: 1, type: "binary", text: "Penghapus digunakan untuk menghapus tulisan.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Tidak ada unsur digital, pengolahan data, maupun kecerdasan di dalam penghapus karet." },
+            { level: 1, type: "binary", text: "Kipas angin dinyalakan menggunakan tombol manual.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Kipas angin biasa hanya motor listrik yang berputar saat diberi arus melalui tombol." },
+            { level: 1, type: "binary", text: "Stopwatch sederhana menghitung waktu.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Stopwatch hanya melakukan penghitungan angka yang bertambah setiap detik secara pasti." },
+            { level: 1, type: "binary", text: "Penggaris digital sederhana menampilkan angka pengukuran.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Hanya mengubah sinyal mekanis/laser menjadi angka pasti di layar, tidak ada analisis data." },
+            { level: 1, type: "binary", text: "Keyboard biasa digunakan untuk mengetik.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Keyboard hanyalah perangkat input hardware standar yang meneruskan sinyal tombol." },
+            { level: 1, type: "binary", text: "Mouse digunakan untuk menggerakkan pointer.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Mouse adalah perangkat input biasa yang mengukur pergerakan fisik." },
+            { level: 1, type: "binary", text: "Printer mencetak dokumen sesuai perintah dari komputer.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Printer standar hanya alat output yang menjalankan perintah cetak tanpa memikirkan isinya." },
+            { level: 1, type: "binary", text: "Flashdisk digunakan untuk menyimpan file.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Flashdisk hanyalah media penyimpanan (storage) statis." },
+            { level: 1, type: "binary", text: "Kalkulator sederhana menghitung perkalian.", options: ["AI", "Bukan AI"], correct: 1, explanation: "Program komputasinya statis, tidak ada machine learning di dalamnya." },
+
+            // TIPE 1 - Identifikasi (Pilihan Ganda)
+            { level: 1, type: "mcq", text: "Teknologi yang dapat mengenali wajah seseorang untuk membuka smartphone merupakan contoh...", options: ["Penyimpanan data", "Kecerdasan artifisial", "Perangkat input", "Jaringan komputer"], correct: 1, explanation: "Pengenalan wajah menggunakan kemampuan AI (Computer Vision) untuk mencocokkan fitur wajah." },
+            { level: 1, type: "mcq", text: "Manakah yang BUKAN merupakan contoh penggunaan AI?", options: ["YouTube memberi rekomendasi video", "Face Unlock mengenali wajah", "Kalkulator melakukan operasi 25+15", "Aplikasi mengenali suara pengguna"], correct: 2, explanation: "Kalkulator hanya menjalankan rumus operasi yang sudah ditetapkan dan tidak belajar dari data." },
+            { level: 1, type: "mcq", text: "Manakah pasangan yang paling tepat?", options: ["Face Unlock → mengenali wajah", "Penggaris → mengenali suara", "Buku tulis → memberi rekomendasi", "Saklar lampu → memahami bahasa"], correct: 0, explanation: "Face Unlock merupakan fungsi nyata dari kecerdasan artifisial di smartphone." },
+            { level: 1, type: "mcq", text: "Manakah yang merupakan contoh AI?", options: ["Penggaris", "Face Unlock", "Pensil", "Buku"], correct: 1, explanation: "Face Unlock adalah implementasi AI untuk keamanan biometrik." },
+
+            // TIPE 2 - Situasi
+            { level: 2, type: "mcq", text: "Ketika aplikasi musik memberikan rekomendasi lagu berdasarkan lagu yang sering kita dengarkan, teknologi tersebut menggunakan...", options: ["AI", "Printer", "Keyboard", "Kabel jaringan"], correct: 0, explanation: "Sistem mempelajari selera musikmu (data pengguna) menggunakan AI untuk memberikan rekomendasi." },
+            { level: 2, type: "mcq", text: "Google Maps dapat memberikan rekomendasi rute berdasarkan berbagai informasi perjalanan. Hal tersebut merupakan salah satu contoh...", options: ["AI dalam analisis data", "Penyimpanan file", "Pengolah kata", "Perangkat keras"], correct: 0, explanation: "AI menganalisis data lalu lintas yang sangat besar secara cepat untuk menentukan rute terbaik." },
+            { level: 2, type: "mcq", text: "Siswa membuka aplikasi video dan mendapatkan rekomendasi video yang sesuai dengan video yang sering ditontonnya. Contoh tersebut menunjukkan AI dapat...", options: ["Mempelajari pola dari data pengguna", "Menggantikan perangkat keras", "Menghapus internet", "Mengubah monitor menjadi printer"], correct: 0, explanation: "Algoritma AI melacak apa yang kamu tonton untuk memprediksi minatmu ke depan." },
+            { level: 2, type: "mcq", text: "Rani menonton beberapa video memasak. Setelah itu, aplikasi video semakin sering menampilkan video memasak. Teknologi tersebut merupakan contoh...", options: ["Bukan AI", "Kecerdasan Artifisial (AI)", "Kalkulator", "Printer"], correct: 1, explanation: "Sistem memanfaatkan pola dari perilaku pengguna untuk memberikan rekomendasi yang personal." },
+            { level: 2, type: "binary", text: "Seorang siswa menggunakan chatbot untuk mendapatkan penjelasan materi pelajaran dengan bahasa yang lebih sederhana.", options: ["AI", "Bukan AI"], correct: 0, explanation: "Chatbot merupakan contoh AI berbasis pemrosesan bahasa (NLP)." },
+            { level: 2, type: "binary", text: "Sebuah kamera dapat mendeteksi wajah seseorang secara otomatis untuk fokus memotret.", options: ["AI", "Bukan AI"], correct: 0, explanation: "Kemampuan tersebut menunjukkan penggunaan AI untuk mengenali pola wajah dalam gambar." },
+
+            // TIPE 3 - Analisis
+            { level: 3, type: "binary", text: "Sebuah aplikasi belajar menganalisis hasil latihan siswa. Siswa yang belum menguasai materi A diberi latihan tambahan materi A, sedangkan yang sudah bisa lanjut ke materi B.", options: ["AI", "Bukan AI"], correct: 0, explanation: "Aplikasi pembelajaran adaptif ini menggunakan AI untuk mempersonalisasi materi sesuai kemampuan spesifik setiap siswa." },
+            { level: 3, type: "mcq", text: "Sebuah aplikasi hanya menjalankan perintah yang sudah ditentukan dan tidak mempelajari data atau mengenali pola. Apakah aplikasi tersebut otomatis merupakan AI?", options: ["Ya, semua software adalah AI", "Tidak, itu bukan AI"], correct: 1, explanation: "Tidak semua program komputer adalah AI. AI memiliki kemampuan untuk mengenali pola, memproses data, membuat prediksi, atau beradaptasi." }
+        ];
+
+        // --- VARIABEL STATE GAME ---
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let lives = 3;
+        let streak = 0;
+        let totalCorrect = 0;
+        let totalWrong = 0;
+        const TOTAL_ROUNDS = 20; 
+        
+        let isAnimating = false;
+
+        // Elemen DOM
+        const elApp = document.getElementById('app');
+        const elScore = document.getElementById('score-display');
+        const elLives = document.getElementById('lives-display');
+        const elProgress = document.getElementById('progress-display');
+        const elQuestionText = document.getElementById('question-text');
+        const elQuestionLevel = document.getElementById('question-level');
+        const elPadsContainer = document.getElementById('pads-container');
+        const elFrog = document.getElementById('player-frog');
+        const elSplash = document.getElementById('splash-effect');
+        const elStreak = document.getElementById('streak-indicator');
+        
+        const modal = document.getElementById('feedback-modal');
+        const feedbackCard = document.getElementById('feedback-card');
+        const feedbackIcon = document.getElementById('feedback-icon');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackCorrectAnswer = document.getElementById('feedback-correct-answer');
+        const feedbackExplanation = document.getElementById('feedback-explanation');
+        const feedbackBtn = document.getElementById('feedback-btn');
+
+        // --- FUNGSI NAVIGASI ---
+        function showScreen(screenId) {
+            // Sembunyikan semua screen
+            document.querySelectorAll('#app > div[id^="screen-"]').forEach(el => {
+                el.classList.add('hidden-screen');
+                el.classList.remove('fade-in');
+            });
+            // Tampilkan screen yang diminta
+            const activeScreen = document.getElementById(screenId);
+            if(activeScreen) {
+                activeScreen.classList.remove('hidden-screen');
+                // Trigger reflow untuk animasi ulang
+                void activeScreen.offsetWidth;
+                activeScreen.classList.add('fade-in');
+            }
+        }
+
+        // --- LOGIKA UTAMA GAME ---
+        function startGame() {
+            // Reset State
+            score = 0;
+            lives = 3;
+            streak = 0;
+            totalCorrect = 0;
+            totalWrong = 0;
+            currentQuestionIndex = 0;
+            
+            updateHUD();
+            
+            // Siapkan soal acak sebanyak TOTAL_ROUNDS
+            currentQuestions = [...questionBank].sort(() => 0.5 - Math.random()).slice(0, TOTAL_ROUNDS);
+            
+            showScreen('screen-game');
+            resetFrogPosition();
+            loadQuestion();
+        }
+
+        function updateHUD() {
+            elScore.innerText = score;
+            
+            // Update Nyawa (Hati)
+            elLives.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                if (i < lives) {
+                    elLives.innerHTML += '<i class="fas fa-heart"></i>';
+                } else {
+                    elLives.innerHTML += '<i class="far fa-heart text-red-200"></i>';
+                }
+            }
+
+            elProgress.innerText = `${currentQuestionIndex + 1} / ${TOTAL_ROUNDS}`;
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= TOTAL_ROUNDS) {
+                endGame();
+                return;
+            }
+
+            isAnimating = false;
+            const q = currentQuestions[currentQuestionIndex];
+            
+            // Tampilkan Teks Soal
+            elQuestionText.innerText = q.text;
+            
+            // Tampilkan Level
+            let levelText = "Level 1 - Kenali AI";
+            if(q.level === 2) levelText = "Level 2 - AI di Sekitarku";
+            if(q.level === 3) levelText = "Level 3 - Detektif AI";
+            elQuestionLevel.innerText = levelText;
+
+            // Generate Daun Teratai (Pilihan)
+            elPadsContainer.innerHTML = '';
+            
+            // Sesuaikan grid CSS berdasarkan jumlah opsi
+            elPadsContainer.className = `grid gap-4 w-full px-4 mb-20 md:mb-24 z-10 relative place-items-center mx-auto ${q.options.length === 2 ? 'pads-container-2' : 'pads-container-4'}`;
+
+            q.options.forEach((optText, index) => {
+                const pad = document.createElement('div');
+                pad.className = `lily-pad w-24 h-24 md:w-32 md:h-32 rounded-full flex items-center justify-center text-center p-2 cursor-pointer shadow-lg font-bold text-white transition-all transform hover:scale-105 active:scale-95`;
+                
+                // Warna daun berbeda jika Binary AI/Bukan AI vs MCQ biasa
+                if (q.type === 'binary') {
+                    if (optText === "AI") {
+                        pad.style.backgroundColor = "#0ea5e9"; // Biru untuk AI
+                        pad.style.borderBottomColor = "#0369a1";
+                        pad.innerHTML = `<div class="flex flex-col items-center"><span class="text-3xl mb-1 drop-shadow">🤖</span><span class="text-sm md:text-lg text-shadow">AI</span></div>`;
+                    } else {
+                        pad.style.backgroundColor = "#eab308"; // Kuning/Coklat untuk Bukan AI
+                        pad.style.borderBottomColor = "#a16207";
+                        pad.innerHTML = `<div class="flex flex-col items-center"><span class="text-3xl mb-1 drop-shadow">❌</span><span class="text-sm md:text-lg text-shadow leading-tight">Bukan AI</span></div>`;
+                    }
+                } else {
+                    // Pilihan ganda biasa (hijau)
+                    pad.style.backgroundColor = "#10b981"; 
+                    pad.style.borderBottomColor = "#047857";
+                    pad.innerHTML = `<span class="text-sm md:text-base drop-shadow-md px-1">${optText}</span>`;
+                }
+
+                // Tambahkan delay animasi float sedikit berbeda agar natural
+                pad.style.animationDelay = `${index * 0.5}s`;
+
+                pad.onclick = () => handleAnswer(index, pad);
+                elPadsContainer.appendChild(pad);
+            });
+            
+            updateHUD();
+        }
+
+        function handleAnswer(selectedIndex, padElement) {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            // Matikan klik semua daun
+            Array.from(elPadsContainer.children).forEach(p => p.classList.add('disabled'));
+
+            const q = currentQuestions[currentQuestionIndex];
+            const isCorrect = (selectedIndex === q.correct);
+
+            // Dapatkan posisi target untuk lompatan katak
+            const frogRect = elFrog.getBoundingClientRect();
+            const padRect = padElement.getBoundingClientRect();
+            
+            // Hitung translasi relatif (Pusat ke pusat)
+            const transX = (padRect.left + padRect.width/2) - (frogRect.left + frogRect.width/2);
+            const transY = (padRect.top + padRect.height/2) - (frogRect.top + frogRect.height/2);
+
+            // Animasi Persiapan (Mengkerut dikit)
+            elFrog.style.transform = `scale(1.1, 0.9) translateY(10px)`;
+            
+            setTimeout(() => {
+                // Lompat
+                elFrog.classList.add('jumping');
+                // Menggunakan cubic-bezier untuk efek parabola/lengkungan
+                elFrog.style.transition = 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)'; 
+                elFrog.style.transform = `translate(${transX}px, ${transY - 30}px) scale(0.9)`;
+
+                setTimeout(() => {
+                    // Mendarat
+                    elFrog.classList.remove('jumping');
+                    
+                    if (isCorrect) {
+                        handleCorrectAnswer(padElement, transX, transY, q);
+                    } else {
+                        handleWrongAnswer(padElement, transX, transY, q);
+                    }
+                }, 500); // Waktu lompat
+            }, 150); // Waktu ancang-ancang
+        }
+
+        function handleCorrectAnswer(pad, x, y, question) {
+            // Katak duduk manis di daun
+            elFrog.style.transform = `translate(${x}px, ${y}px) scale(1)`;
+            pad.classList.add('pad-correct');
+            
+            totalCorrect++;
+            streak++;
+            score += 10;
+            
+            // Cek Bonus Streak
+            let streakMsg = "";
+            if (streak === 3) { score += 10; streakMsg = "3x Benar! Bonus +10!"; }
+            else if (streak === 5) { score += 20; streakMsg = "5x Benar! Bonus +20!"; }
+            else if (streak > 5 && streak % 3 === 0) { score += 10; streakMsg = "On Fire! Bonus +10!"; }
+
+            if (streakMsg) {
+                elStreak.innerText = streakMsg;
+                elStreak.classList.remove('opacity-0');
+                elStreak.classList.add('opacity-100', 'text-yellow-400');
+                setTimeout(() => { elStreak.classList.add('opacity-0'); elStreak.classList.remove('opacity-100'); }, 2000);
+            }
+
+            updateHUD();
+            createStars(pad.getBoundingClientRect());
+
+            // Tampilkan Umpan Balik Edukatif untuk Jawaban Benar
+            const toast = document.getElementById('correct-toast');
+            document.getElementById('correct-toast-text').innerText = question.explanation;
+            
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            
+            // Beri waktu 2.5 detik untuk membaca sebelum soal baru otomatis muncul
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+                setTimeout(() => {
+                    nextQuestion();
+                }, 300); // Tunggu animasi fade-out selesai
+            }, 2500);
+        }
+
+        function handleWrongAnswer(pad, x, y, question) {
+            // Katak meleset/jatuh
+            elFrog.classList.add('surprised');
+            elFrog.style.transform = `translate(${x}px, ${y + 20}px) rotate(15deg) scale(1.1)`;
+            pad.classList.add('pad-wrong');
+            
+            totalWrong++;
+            streak = 0;
+            lives--;
+            updateHUD();
+
+            setTimeout(() => {
+                // Animasi Jatuh ke air
+                elFrog.style.transition = 'transform 0.6s ease-in, opacity 0.4s 0.2s';
+                elFrog.classList.add('falling');
+                
+                // Efek Splash
+                const frogRect = elFrog.getBoundingClientRect();
+                const containerRect = document.getElementById('play-area').getBoundingClientRect();
+                
+                elSplash.style.left = `${(frogRect.left - containerRect.left) + 40 - 50}px`; // center splash relative to play area
+                // perkiraan posisi Y jatuh
+                elSplash.style.top = `${(frogRect.top - containerRect.top) + 80}px`; 
+                
+                elSplash.classList.remove('active');
+                void elSplash.offsetWidth; // trigger reflow
+                elSplash.classList.add('active');
+
+                setTimeout(() => {
+                    showFeedbackModal(false, question);
+                }, 800);
+            }, 300);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            resetFrogPosition();
+            loadQuestion();
+        }
+
+        function resetFrogPosition() {
+            elFrog.className = 'frog bottom-4'; // Reset classes
+            elFrog.style.transition = 'none'; // Matikan transisi saat reset
+            elFrog.style.transform = 'translate(0, 0) scale(1) rotate(0)'; // Reset transform
+            
+            // Trigger reflow agar transition nyala lagi saat animasi jalan
+            void elFrog.offsetWidth;
+            elFrog.style.transition = 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+        }
+
+        function showFeedbackModal(isWinState, q) {
+            feedbackCard.className = "bg-white p-8 rounded-3xl max-w-md w-11/12 text-center shadow-2xl relative";
+            
+            if (!isWinState) {
+                feedbackCard.classList.add("border-t-8", "border-t-red-500");
+                feedbackIcon.innerHTML = "💦";
+                feedbackIcon.className = "text-6xl mb-4 -mt-16 bg-white w-24 h-24 mx-auto rounded-full flex items-center justify-center shadow-lg border-4 border-red-500 text-red-500";
+                feedbackTitle.innerText = "Ups! Jawaban belum tepat.";
+                feedbackTitle.className = "text-3xl font-bold font-title mb-4 text-red-600";
+                
+                feedbackCorrectAnswer.innerText = q.options[q.correct];
+                feedbackExplanation.innerText = q.explanation;
+                
+                if (lives > 0) {
+                    feedbackBtn.innerHTML = "Coba Lagi 🔄";
+                    feedbackBtn.className = "btn-primary w-full py-4 rounded-2xl text-xl font-bold font-title text-yellow-900 shadow-md mt-6";
+                    feedbackBtn.onclick = () => {
+                        hideFeedbackModal();
+                        nextQuestion(); // Paksa lanjut ke soal berikutnya meskipun salah, atau biarkan mengulang?
+                        // Prompt bilang: "Berikan pilihan 'Coba Lagi' agar siswa dapat melanjutkan permainan."
+                        // Biasanya ini berarti lanjut ke soal berikutnya (tapi nyawa berkurang).
+                    };
+                } else {
+                    feedbackBtn.innerHTML = "Game Over 💀";
+                    feedbackBtn.className = "bg-red-500 border-b-4 border-red-700 text-white w-full py-4 rounded-2xl text-xl font-bold font-title shadow-md mt-6 hover:bg-red-600 active:translate-y-1 active:border-b-0 active:mb-1 transition-all";
+                    feedbackBtn.onclick = () => {
+                        hideFeedbackModal();
+                        endGame();
+                    };
+                }
+            }
+
+            modal.classList.remove('modal-hidden');
+            modal.classList.add('modal-visible');
+        }
+
+        function hideFeedbackModal() {
+            modal.classList.remove('modal-visible');
+            modal.classList.add('modal-hidden');
+        }
+
+        function createStars(rect) {
+            const container = document.getElementById('stars-container');
+            const colors = ['#fde047', '#fbbf24', '#ffffff'];
+            
+            for(let i=0; i<6; i++) {
+                const star = document.createElement('div');
+                star.innerHTML = '✨';
+                star.className = 'star-burst';
+                
+                // Posisikan di sekitar daun
+                const left = rect.left + (rect.width/2) - 16 + (Math.random() * 50 - 25);
+                const top = rect.top + (rect.height/2) - 16 + (Math.random() * 30 - 15);
+                
+                // Posisikan di sekitar daun
+                const left = rect.left + (rect.width/2) - 16 + (Math.random() * 40 - 20);
+                const top = rect.top + (rect.height/2) - 16 + (Math.random() * 20 - 10);
+                
+                star.style.left = `${left}px`;
+                star.style.top = `${top}px`;
+                star.style.color = colors[Math.floor(Math.random() * colors.length)];
+                // Animasi custom path
+                star.style.animation = `starPop 0.8s ease-out forwards`;
+                star.style.animationDelay = `${Math.random() * 0.2}s`;
+                
+                container.appendChild(star);
+                
+                setTimeout(() => star.remove(), 1000);
+            }
+        }
+
+        function showFloatingText(text, rect, colorClass) {
+            const el = document.createElement('div');
+            el.innerText = text;
+            el.className = `absolute z-50 font-bold text-2xl font-title drop-shadow-md ${colorClass}`;
+            el.style.left = `${rect.left + rect.width/2}px`;
+            el.style.top = `${rect.top}px`;
+            el.style.transform = 'translate(-50%, -50%)';
+            el.style.transition = 'all 1s ease-out';
+            
+            document.body.appendChild(el);
+            
+            // Trigger animation
+            setTimeout(() => {
+                el.style.top = `${rect.top - 100}px`;
+                el.style.opacity = '0';
+            }, 50);
+            
+            setTimeout(() => el.remove(), 1050);
+        }
+
+        function endGame() {
+            showScreen('screen-result');
+            
+            document.getElementById('result-score').innerText = score;
+            document.getElementById('result-correct').innerText = totalCorrect;
+            document.getElementById('result-wrong').innerText = totalWrong;
+            
+            // Hitung Akurasi (Berdasarkan jumlah soal yang dijawab, bukan total ronde jika game over dini)
+            const totalAnswered = totalCorrect + totalWrong;
+            const accuracy = totalAnswered === 0 ? 0 : Math.round((totalCorrect / totalAnswered) * 100);
+            
+            document.getElementById('result-accuracy').innerText = `${accuracy}%`;
+            
+            // Animate progress bar
+            setTimeout(() => {
+                document.getElementById('accuracy-bar').style.width = `${accuracy}%`;
+            }, 500);
+
+            // Predikat
+            const elRank = document.getElementById('result-rank');
+            const title = document.getElementById('result-title');
+            const icon = document.getElementById('result-icon');
+            const subtitle = document.getElementById('result-subtitle');
+            
+            if (lives === 0) {
+                title.innerText = "GAME OVER!";
+                title.className = "text-3xl md:text-4xl font-bold font-title text-red-600 mb-2";
+                subtitle.innerText = "Katak kehabisan nyawa di tengah jalan.";
+                icon.innerHTML = "🐸💦";
+                icon.className = "text-7xl mb-2 -mt-16 bg-white w-28 h-28 mx-auto rounded-full flex items-center justify-center shadow-xl border-8 border-gray-400";
+            } else {
+                title.innerText = "MISI SELESAI!";
+                title.className = "text-3xl md:text-4xl font-bold font-title text-blue-900 mb-2";
+                subtitle.innerText = "Kamu Berhasil Menyeberangkan Katak!";
+                icon.innerHTML = "🏆";
+                icon.className = "text-7xl mb-2 -mt-16 bg-white w-28 h-28 mx-auto rounded-full flex items-center justify-center shadow-xl border-8 border-yellow-400";
+                createConfetti();
+            }
+
+            if (accuracy >= 90) { elRank.innerHTML = "🏆 MASTER DETEKTIF AI"; elRank.className = "inline-block px-4 py-2 bg-yellow-100 text-yellow-800 font-bold rounded-full text-lg shadow-sm border border-yellow-400"; }
+            else if (accuracy >= 80) { elRank.innerHTML = "🥇 DETEKTIF AI"; elRank.className = "inline-block px-4 py-2 bg-blue-100 text-blue-800 font-bold rounded-full text-lg shadow-sm border border-blue-400"; }
+            else if (accuracy >= 70) { elRank.innerHTML = "🥈 PENJELAJAH AI"; elRank.className = "inline-block px-4 py-2 bg-gray-100 text-gray-800 font-bold rounded-full text-lg shadow-sm border border-gray-400"; }
+            else { elRank.innerHTML = "🌱 CALON DETEKTIF AI"; elRank.className = "inline-block px-4 py-2 bg-green-100 text-green-800 font-bold rounded-full text-lg shadow-sm border border-green-400"; }
+        }
+
+        // Simple CSS Confetti Generator for Victory Screen
+        function createConfetti() {
+            const container = document.getElementById('confetti-layer');
+            container.innerHTML = '';
+            const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#a855f7'];
+            
+            for (let i = 0; i < 50; i++) {
+                const conf = document.createElement('div');
+                conf.style.position = 'absolute';
+                conf.style.width = '10px';
+                conf.style.height = '10px';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.left = `${Math.random() * 100}%`;
+                conf.style.top = '-10px';
+                conf.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                
+                const animDuration = Math.random() * 3 + 2;
+                conf.style.transition = `top ${animDuration}s linear, transform ${animDuration}s ease-in-out`;
+                
+                container.appendChild(conf);
+                
+                // Trigger animation
+                setTimeout(() => {
+                    conf.style.top = '100%';
+                    conf.style.transform = `rotate(${Math.random() * 720}deg) translateX(${Math.random() * 100 - 50}px)`;
+                }, 50);
+            }
+        }
+
+        // Inisialisasi awal
+        showScreen('screen-menu');
+    </script>
+</body>
+</html>
